@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser'
 import compress from 'compression'
 import cors from 'cors'
 import helmet from 'helmet'
+import authRoutes from './routes/auth.routes.js'
 import contactRoutes from './routes/contact.routes.js'
 import projectRoutes from './routes/project.routes.js'
 import qualificationRoutes from './routes/qualification.routes.js'
@@ -18,7 +19,8 @@ app.use(compress())
 app.use(helmet())
 app.use(cors())
 
-// Mount the API routes for each collection
+// Mount the sign in / sign out routes and the API routes for each collection
+app.use('/', authRoutes)
 app.use('/', contactRoutes)
 app.use('/', projectRoutes)
 app.use('/', qualificationRoutes)
