@@ -1,0 +1,5 @@
+# Dependencies (reinstalled with npm install)
+node_modules
+
+# Environment files that may hold secrets
+.env
