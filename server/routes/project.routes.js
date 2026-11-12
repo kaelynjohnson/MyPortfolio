@@ -1,6 +1,8 @@
 // project.routes.js - maps project API addresses to their controller functions
+// Anyone can view; only admins can add, edit, or delete
 import express from "express";
 import projectController from "../controllers/project.controller.js";
+import authController from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
@@ -8,14 +10,30 @@ const router = express.Router();
 router
   .route("/api/projects")
   .get(projectController.getAllProjects)
-  .post(projectController.createProject)
-  .delete(projectController.deleteAllProjects);
+  .post(
+    authController.requireSignin,
+    authController.requireAdmin,
+    projectController.createProject
+  )
+  .delete(
+    authController.requireSignin,
+    authController.requireAdmin,
+    projectController.deleteAllProjects
+  );
 
 // Routes for /api/projects/:id
 router
   .route("/api/projects/:id")
   .get(projectController.getProjectById)
-  .put(projectController.updateProjectById)
-  .delete(projectController.deleteProjectById);
+  .put(
+    authController.requireSignin,
+    authController.requireAdmin,
+    projectController.updateProjectById
+  )
+  .delete(
+    authController.requireSignin,
+    authController.requireAdmin,
+    projectController.deleteProjectById
+  );
 
 export default router;

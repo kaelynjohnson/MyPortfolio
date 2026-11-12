@@ -1,9 +1,9 @@
-// auth.controller.js - handles sign in, sign out, and checking login tokens (JWT)
+// auth.controller.js - handles sign in, sign out, and checking login tokens and roles (JWT)
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import config from "../../config/config.js";
 
-// POST /auth/signin - check email and password, then return a signed token
+// POST /auth/signin - check email and password, then return a signed token and the user's role
 const signin = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
@@ -26,7 +26,7 @@ const signin = async (req, res) => {
 
     res.json({
       token,
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
     res.status(400).json({ error: "Could not sign in" });
@@ -58,4 +58,18 @@ const requireSignin = (req, res, next) => {
   }
 };
 
-export default { signin, signout, requireSignin };
+// Middleware: lets a request through only if the signed-in user is an admin
+// (use it after requireSignin, which sets req.auth)
+const requireAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.auth._id);
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    res.status(403).json({ error: "Admin access required" });
+  }
+};
+
+export default { signin, signout, requireSignin, requireAdmin };

@@ -12,6 +12,8 @@ const UserSchema = new mongoose.Schema({
     required: "Email is required",
   },
   password: { type: String, required: "Password is required" },
+  // Role decides what the person can do: admins can change data, users can only view
+  role: { type: String, enum: ["user", "admin"], default: "user" },
   created: { type: Date, default: Date.now },
   updated: { type: Date },
 });

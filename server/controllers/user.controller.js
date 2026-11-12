@@ -24,14 +24,20 @@ const getUserById = async (req, res) => {
   }
 };
 
-// POST api/users - add a new user
+// POST api/users - sign up a new user; the role is always "user" so nobody can sign up as admin
 const createUser = async (req, res) => {
   try {
-    const newUser = await User.create(req.body);
+    const newUser = await User.create({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      role: "user",
+    });
     res.status(201).json({
       _id: newUser._id,
       name: newUser.name,
       email: newUser.email,
+      role: newUser.role,
       created: newUser.created,
     });
   } catch (error) {
@@ -39,12 +45,13 @@ const createUser = async (req, res) => {
   }
 };
 
-// PUT api/users/:id - update a user by their id and record the update time
+// PUT api/users/:id - update a user by their id; the role cannot be changed here
 const updateUserById = async (req, res) => {
   try {
+    const { role, ...safeData } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, updated: Date.now() },
+      { ...safeData, updated: Date.now() },
       { new: true, runValidators: true }
     ).select("-password");
     if (!updatedUser) {

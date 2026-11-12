@@ -1,0 +1,67 @@
+### Sign up the admin account
+POST http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "name": "Admin",
+  "email": "admin@example.com",
+  "password": "admin1234"
+}
+
+### Sign in as admin
+# @name adminSignin
+POST http://localhost:3000/auth/signin
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin1234"
+}
+
+### Admin adds a qualification (should work)
+POST http://localhost:3000/api/qualifications
+Content-Type: application/json
+Authorization: Bearer {{adminSignin.response.body.token}}
+
+{
+  "title": "Advanced Diploma in AI - Software Engineering Technology",
+  "firstname": "Kaelyn",
+  "lastname": "Johnson",
+  "email": "admin@example.com",
+  "completion": "2028-06-01",
+  "description": "Centennial College"
+}
+
+### Sign up a regular user
+POST http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "name": "Regular User",
+  "email": "regular@example.com",
+  "password": "user1234"
+}
+
+### Sign in as the regular user
+# @name userSignin
+POST http://localhost:3000/auth/signin
+Content-Type: application/json
+
+{
+  "email": "regular@example.com",
+  "password": "user1234"
+}
+
+### Regular user tries to add a qualification (should be blocked)
+POST http://localhost:3000/api/qualifications
+Content-Type: application/json
+Authorization: Bearer {{userSignin.response.body.token}}
+
+{
+  "title": "Should Not Be Saved",
+  "firstname": "Regular",
+  "lastname": "User",
+  "email": "regular@example.com",
+  "completion": "2028-06-01",
+  "description": "This should be blocked"
+}
