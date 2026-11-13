@@ -1,29 +1,35 @@
-// Contact.jsx - contact page with a contact info panel and a message form
+// Contact.jsx - contact page with a contact info panel and a form that saves messages to the database
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiRequest } from '../api.js';
 
 function Contact() {
   const navigate = useNavigate();
 
   // Holds whatever the visitor types into each form field
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    emailAddress: '',
+    firstname: '',
+    lastname: '',
+    phone: '',
+    email: '',
     message: '',
   });
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Updates the matching field in formData each time the visitor types
   const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
-  // Captures the form data, then redirects the visitor back to the Home page
-  const handleSubmit = (event) => {
+  // Sends the message to the backend, then redirects the visitor back to the Home page
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log('Form submitted:', formData);
-    navigate('/');
+    try {
+      await apiRequest('/api/contacts', 'POST', formData);
+      navigate('/');
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   };
 
   return (
@@ -43,41 +49,43 @@ function Contact() {
         </aside>
 
         <form className="contact-form" onSubmit={handleSubmit}>
-          <label htmlFor="firstName">First Name</label>
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+          <label htmlFor="firstname">First Name</label>
           <input
             type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
+            id="firstname"
+            name="firstname"
+            value={formData.firstname}
             onChange={handleChange}
             required
           />
 
-          <label htmlFor="lastName">Last Name</label>
+          <label htmlFor="lastname">Last Name</label>
           <input
             type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
+            id="lastname"
+            name="lastname"
+            value={formData.lastname}
             onChange={handleChange}
             required
           />
 
-          <label htmlFor="phoneNumber">Contact Number</label>
+          <label htmlFor="phone">Contact Number</label>
           <input
             type="tel"
-            id="phoneNumber"
-            name="phoneNumber"
-            value={formData.phoneNumber}
+            id="phone"
+            name="phone"
+            value={formData.phone}
             onChange={handleChange}
           />
 
-          <label htmlFor="emailAddress">Email Address</label>
+          <label htmlFor="email">Email Address</label>
           <input
             type="email"
-            id="emailAddress"
-            name="emailAddress"
-            value={formData.emailAddress}
+            id="email"
+            name="email"
+            value={formData.email}
             onChange={handleChange}
             required
           />

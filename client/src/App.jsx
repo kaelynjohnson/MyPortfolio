@@ -7,6 +7,8 @@ import Projects from './pages/Projects.jsx';
 import Education from './pages/Education.jsx';
 import Services from './pages/Services.jsx';
 import Contact from './pages/Contact.jsx';
+import Signin from './pages/Signin.jsx';
+import Signup from './pages/Signup.jsx';
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/education" element={<Education />} />
         <Route path="/services" element={<Services />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/signin" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} />
       </Route>
     </Routes>
   );

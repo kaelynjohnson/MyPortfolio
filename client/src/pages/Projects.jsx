@@ -1,34 +1,79 @@
-// Projects.jsx - projects page showing three past projects with an image, my role, and the outcome
-import ctrlClutchLogo from '../assets/ctrl-clutch-logo.png';
-import cgiProject from '../assets/cgi-project.png';
-import collegeApp from '../assets/college-app.png';
-
-// List of projects; each one is displayed as a card below
-const projectList = [
-  {
-    title: 'CTRL+ Clutch Logo',
-    image: ctrlClutchLogo,
-    imageAlt: 'CTRL+ Clutch logo design',
-    role: 'Designer. I created this logo just for fun, imagining a brand for a sports company.',
-    outcome: 'A bold, original logo that helped me practice branding and design ideas.',
-  },
-  {
-    title: 'CGI Web Page',
-    image: cgiProject,
-    imageAlt: 'Screenshot of my CGI web page',
-    role: 'Developer. I built an HTML web page about CGI as a school project.',
-    outcome: 'A finished page that taught me the basics of structuring and presenting content on the web.',
-  },
-  {
-    title: 'College Application Letter Request Form',
-    image: collegeApp,
-    imageAlt: 'Screenshot of my college application letter request form',
-    role: 'Developer. I created a letter request form for a college application as a school project.',
-    outcome: 'A working form layout that gave me hands-on practice collecting user information.',
-  },
-];
+// Projects.jsx - projects page; loads projects from the database,
+// and lets an admin add, edit, and delete them
+import { useState, useEffect } from 'react';
+import { apiRequest } from '../api.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import ProjectForm from '../components/ProjectForm.jsx';
 
 function Projects() {
+  const { user, isAdmin } = useAuth();
+  const [projects, setProjects] = useState([]);
+  const [projectToEdit, setProjectToEdit] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Load the projects once when the page first appears
+  useEffect(() => {
+    apiRequest('/api/projects')
+      .then((data) => setProjects(data))
+      .catch((error) => setErrorMessage(error.message));
+  }, []);
+
+  // Fetch the projects again after an add, edit, or delete
+  const refreshProjects = async () => {
+    const data = await apiRequest('/api/projects');
+    setProjects(data);
+  };
+
+  // Add a new project, or update the one being edited, then refresh the list
+  const saveProject = async (formData) => {
+    const isEditing = projectToEdit !== null;
+    // The model also needs a name and email, so the signed-in admin's details are used
+    const nameParts = user.name.split(' ');
+    const projectData = {
+      ...formData,
+      firstname: nameParts[0],
+      lastname: nameParts.slice(1).join(' ') || nameParts[0],
+      email: user.email,
+    };
+
+    try {
+      if (isEditing) {
+        await apiRequest(`/api/projects/${projectToEdit._id}`, 'PUT', projectData);
+      } else {
+        await apiRequest('/api/projects', 'POST', projectData);
+      }
+      await refreshProjects();
+      setProjectToEdit(null);
+      setErrorMessage('');
+      return true;
+    } catch (error) {
+      setErrorMessage(error.message);
+      return false;
+    }
+  };
+
+  // Delete a project by id, then refresh the list
+  const deleteProject = async (projectId) => {
+    try {
+      await apiRequest(`/api/projects/${projectId}`, 'DELETE');
+      if (projectToEdit && projectToEdit._id === projectId) {
+        setProjectToEdit(null);
+      }
+      await refreshProjects();
+      setErrorMessage('');
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
+  };
+
+  // Turn a saved date into a readable month and year
+  const formatDate = (dateText) =>
+    new Date(dateText).toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: 'long',
+      timeZone: 'UTC',
+    });
+
   return (
     <section className="projects">
       <h1>My Projects</h1>
@@ -38,15 +83,43 @@ function Projects() {
         growing my skills.
       </p>
 
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+      {/* Only admins see the add/edit form; the key resets it when a different item is chosen */}
+      {isAdmin && (
+        <ProjectForm
+          key={projectToEdit ? projectToEdit._id : 'new'}
+          onSave={saveProject}
+          projectToEdit={projectToEdit}
+          onCancel={() => setProjectToEdit(null)}
+        />
+      )}
+
       <div className="project-grid">
-        {projectList.map((project) => (
-          <article className="project-card" key={project.title}>
-            <img src={project.image} alt={project.imageAlt} />
-            <h2>{project.title}</h2>
-            <p><strong>My role:</strong> {project.role}</p>
-            <p><strong>Outcome:</strong> {project.outcome}</p>
-          </article>
-        ))}
+        {projects.length === 0 ? (
+          <p>No projects added yet.</p>
+        ) : (
+          projects.map((project) => (
+            <article className="project-card" key={project._id}>
+              <h2>{project.title}</h2>
+              <p>{project.description}</p>
+              {project.completion && (
+                <p><strong>Completed:</strong> {formatDate(project.completion)}</p>
+              )}
+              {/* Only admins see the edit and delete buttons */}
+              {isAdmin && (
+                <div className="card-buttons">
+                  <button type="button" className="button" onClick={() => setProjectToEdit(project)}>
+                    Edit
+                  </button>
+                  <button type="button" className="button" onClick={() => deleteProject(project._id)}>
+                    Delete
+                  </button>
+                </div>
+              )}
+            </article>
+          ))
+        )}
       </div>
     </section>
   );
